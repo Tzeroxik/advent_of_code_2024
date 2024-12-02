@@ -3,7 +3,6 @@ import gleam/list
 import gleam/result
 import gleam/string
 import gleam/int
-import gleam/option.{type Option, Some, None}
 
 pub fn run(file_path: String) {
   let assert Ok(lines) = util.read_file_lines(file_path) 
@@ -19,6 +18,7 @@ pub fn run(file_path: String) {
 type LevelPattern {
   Asc
   Desc
+  None
 }
 
 fn is_stable_dropping_one_unstable(line: List(Int)) {
@@ -31,10 +31,19 @@ fn is_stable_dropping_one_unstable(line: List(Int)) {
   }
 }
 
-fn is_stable(line: List(Int), acc: Option(LevelPattern)) {
+fn is_stable(line: List(Int), acc: LevelPattern) {
   case line {
-    [a,b, ..rest] if a > b && a - b <= 3 && acc != Some(Asc)  -> is_stable([b, ..rest], Some(Desc))
-    [a,b, ..rest] if a < b && b - a <= 3 && acc != Some(Desc) -> is_stable([b, ..rest], Some(Asc))
+    [a,b, ..rest] -> {
+      let pattern = case acc {
+        Asc | None if a > b && a - b <= 3 -> Ok(Asc)
+        Desc| None if a < b && b - a <= 3 -> Ok(Desc)
+        _ -> Error(None)
+      }
+      case pattern {
+        Ok(pattern) -> is_stable([b, ..rest], pattern)
+        _ -> False
+      }
+    } 
     [_] -> True
     _   -> False
   }
