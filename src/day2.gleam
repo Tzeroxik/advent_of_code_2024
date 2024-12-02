@@ -24,19 +24,7 @@ type LevelPattern {
 fn is_stable_dropping_one_unstable(line: List(Int)) {
   case is_stable(line, None) {
     True -> True
-    _    -> get_sub_sequences(line, 0, []) |> list.any(is_stable(_, None))
-  }
-}
-
-fn get_sub_sequences(line: List(Int), idx: Int, acc: List(List(Int))) {
-  case idx < list.length(line) {
-    False -> acc
-    True -> {
-      let assert #(lhs, [_, ..rest]) = list.split(line, idx)
-      let seq = list.append(lhs, rest)
-      [seq, ..acc] |> get_sub_sequences(line, idx + 1, _)
-
-    }
+    _    -> list.length(line) - 1 |> list.combinations(line,_) |> list.any(is_stable(_, None))
   }
 }
 
