@@ -22,10 +22,14 @@ type LevelPattern {
 }
 
 fn is_stable_dropping_one_unstable(line: List(Int)) {
-  case is_stable(line, None) {
-    True -> True
-    _    -> list.length(line) - 1 |> list.combinations(line,_) |> list.any(is_stable(_, None))
-  }
+  list.length(line) - 1 
+  |> list.combinations(line,_) 
+  |> cons(line, _) 
+  |> list.any(is_stable(_, None))
+}
+
+fn cons(head: a, tail: List(a)) -> List(a) { 
+  [head, ..tail] 
 }
 
 fn is_stable(line: List(Int), acc: Option(LevelPattern)) {
