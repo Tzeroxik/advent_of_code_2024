@@ -1,6 +1,6 @@
-import gleam/io
 import day1
 import day2
+import gleam/io
 
 pub fn main() {
   io.println("Hello from Advent of Code 2024!")
