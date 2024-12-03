@@ -32,11 +32,10 @@ fn do_mul_reduce(matches: List(Match), total: Int, do: Bool) -> Int {
   case matches {
     [] -> total
     [match, ..rest] ->
-      case match.content {
-        "do" -> do_mul_reduce(rest, total, True)
-        "don't" -> do_mul_reduce(rest, total, False)
-        _ if do == False -> do_mul_reduce(rest, total, do)
-        _ ->
+      case match.content, do { 
+        "do", _ -> do_mul_reduce(rest, total, True)
+        _, False | "don't", _ -> do_mul_reduce(rest, total, False)
+        _, True  ->
           match
           |> mul_sub_matches
           |> int.add(total)
