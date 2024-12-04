@@ -1,73 +1,111 @@
 defmodule Day4 do
   def run!(input) when not is_nil(input) do
-    array = convert_to_array(input)
-    matches = find_pattern(<<"XMAS">>, array)
-    part1 = matches
+    array = convert_to_indexed_array(input)
+    pattern = String.to_charlist("XMAS")
+    part1 = count_pattern(pattern, array, :word)
 
-    {part1}
+    pattern = String.to_charlist("MAS")
+
+    part2 = count_pattern(pattern, array, :cross)
+    {part1, part2}
   end
 
-  def find_pattern(pattern, array) do
-    pattern_char_list = String.to_charlist(pattern)
+  defp count_pattern(pattern, array, mode) do
+    array
+    |> Enum.map(fn line -> count_pattern_in_line(line, pattern, array, mode) end)
+    |> Enum.sum()
+  end
+
+  defp count_pattern_in_line({line, ridx}, pattern, array, mode) do
     size = array2d_size(array)
-    index = {0,0}
-    do_find_pattern(pattern_char_list, array, size, index, 0)
+
+    line
+    |> Enum.map(fn {elem, cidx} ->
+      find_pattern_starting(elem, {ridx, cidx}, pattern, array, size, mode)
+    end)
+    |> Enum.sum()
   end
 
-  defp do_find_pattern(pattern, array, size, index, matches) do
-    {row_size, col_size} = size
-    {r, c} = index
+  defp find_pattern_starting(elem, position, pattern, array, size, :word) do
+    [{0, 1}, {0, -1}, {1, 0}, {-1, 0}, {1, 1}, {-1, -1}, {1, -1}, {-1, 1}]
+    |> Enum.count(fn direction ->
+      has_word_pattern(elem, position, pattern, direction, array, size)
+    end)
+  end
 
-    new_matches = matches + extract_patterns(pattern, array, size, index)
+  defp find_pattern_starting(elem, position, [first, base, last], array, size, :cross) do
+    directions = [{1, 1}, {-1, -1}, {1, -1}, {-1, 1}]
 
-    if r == row_size - 1 and c == col_size - 1 do
-      new_matches
+    if elem == base do
+      has_cross_pattern(position, [first, first, last, last], directions, array, size)
     else
-        new_index = if c == col_size - 1 do {r + 1, 0} else {r, c + 1} end
-        do_find_pattern(pattern, array, size, new_index, new_matches)
+      0
     end
   end
 
-  defp extract_patterns(pattern, array, size, index) do
-    [ {0,1},{0,-1},{1,0},{-1,0},{1,1},{-1,-1},{1,-1},{-1,1}]
-    |> Enum.filter(fn direction -> is_pattern(array, size, index, pattern, direction) end)
-    |> Enum.count
+  defp(has_cross_pattern(_, [], [], _, _), do: 1)
+
+  defp has_cross_pattern(index, elems, [direction | directions], array, size) do
+    case element_or_nil(array, index, direction, size) do
+      nil ->
+        0
+
+      {elem, _, _} ->
+        case List.delete(elems, elem) do
+          l when l == elems -> 0
+          new_elems -> has_cross_pattern(index, new_elems, directions, array, size)
+        end
+    end
   end
 
-  defp is_pattern(_, _, _, [], _), do: true
-  defp is_pattern(array, size, index, [char| pattern], direction) do
-    {r, c} = index
-    cond do
-      char == array[r][c] -> case add_bounded(size, index, direction) do
-        nil -> false
-        new_index -> is_pattern(array, size, new_index, pattern, direction)
+  defp has_word_pattern(elem, {r, c}, [e | pattern], direction, array, size) do
+    if elem == e do
+      case pattern do
+        [] ->
+          1
+
+        pattern ->
+          case element_or_nil(array, {r, c}, direction, size) do
+            nil ->
+              false
+
+            {new_elem, ridx, cidx} ->
+              has_word_pattern(new_elem, {ridx, cidx}, pattern, direction, array, size)
+          end
       end
-      true -> false
+    else
+      false
+    end
+  end
+
+  defp element_or_nil(array, {r, c}, {dir_r, dir_c}, {max_r, max_c}) do
+    ridx = r + dir_r
+    cidx = c + dir_c
+
+    if ridx >= 0 and cidx >= 0 and ridx < max_r and cidx < max_c do
+      {line, _} = array[ridx]
+      {elem, _} = line[cidx]
+      {elem, ridx, cidx}
     end
   end
 
   defp array2d_size(array) do
     row_size = Arrays.size(array)
-    col_size = case row_size do
-      0 -> 0
-      _ -> array[0] |> Arrays.size
-    end
+    {line, _} = array[0]
+    col_size = Arrays.size(line)
     {row_size, col_size}
   end
 
-  defp add_bounded({row_size, col_size}, {r, c}, {row_add, col_add}) do
-    new_r = r + row_add
-    new_c = c + col_add
-    if new_r < row_size and new_c < col_size and new_r >= 0 or new_c >= 0 do
-      {new_r, new_c}
-    end
-  end
-
-  def convert_to_array(input) do
+  defp convert_to_indexed_array(input) do
     input
+    |> String.trim()
     |> String.split(~r{(\r\n|\r|\n)})
-    |> Enum.map(fn(line) -> String.to_charlist(line) |> Arrays.new end)
-    |> Arrays.new
+    |> Enum.map(fn line ->
+      line |> String.to_charlist() |> Enum.with_index(&as_tuple/2) |> Arrays.new()
+    end)
+    |> Enum.with_index(&as_tuple/2)
+    |> Arrays.new()
   end
 
+  defp as_tuple(element, index), do: {element, index}
 end
