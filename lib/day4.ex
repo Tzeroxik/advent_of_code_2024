@@ -40,7 +40,6 @@ defmodule Day4 do
     end
   end
 
-  defp reduce_diag(_,[],_,_,_),do: {:cont, 1}
   defp reduce_diag([first, last], diagonal, position, array, size) do
     case Enum.map(diagonal, fn [p1, p2] -> element_or_nil_no_idx(array, position, {p1, p2}, size) end) do
         [elem1, elem2] when elem1 == first and elem2 == last or elem1 == last and elem2 == first -> {:cont, 1}
