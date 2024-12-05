@@ -6,14 +6,14 @@ defmodule Day5 do
       |> Enum.reduce([], &create_lists/2)
   end
 
-  def create_lists(line, rules) when line == "", do: {rules, []}
+  defp create_lists(line, rules) when line == "", do: {rules, []}
 
-  def create_lists(line, rules) when is_list(rules) do
+  defp create_lists(line, rules) when is_list(rules) do
     rule = split_entry_to_int_list(line, "|") |> List.to_tuple()
     [rule | rules]
   end
 
-  def create_lists(line, {rules, pages}) do
+  defp create_lists(line, {rules, pages}) do
     page = split_entry_to_int_list(line, ",")
     {rules, [page | pages]}
   end
