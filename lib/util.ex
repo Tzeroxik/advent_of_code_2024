@@ -8,6 +8,6 @@ defmodule Util do
   end
 
   def run_day!(day_number, runner) when is_number(day_number) and is_function(runner) do
-    load_input!(day_number) |> runner.() |> IO.inspect
+    load_input!(day_number) |> runner.() |> IO.inspect()
   end
 end
