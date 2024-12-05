@@ -1,16 +1,13 @@
 defmodule Day4 do
   def run!(input) when not is_nil(input) do
     array = convert_to_indexed_array(input)
-    pattern = String.to_charlist("XMAS")
-    part1 = count_pattern(pattern, array, :word)
-
-    pattern = String.to_charlist("MAS")
-
-    part2 = count_pattern(pattern, array, :cross)
+    part1 = count_pattern("XMAS", array, :word)
+    part2 = count_pattern("MAS", array, :cross)
     {part1, part2}
   end
 
   defp count_pattern(pattern, array, mode) do
+    pattern = String.to_charlist(pattern)
     array
     |> Enum.map(fn line -> count_pattern_in_line(line, pattern, array, mode) end)
     |> Enum.sum()
@@ -34,28 +31,21 @@ defmodule Day4 do
   end
 
   defp find_pattern_starting(elem, position, [first, base, last], array, size, :cross) do
-    directions = [{1, 1}, {-1, -1}, {1, -1}, {-1, 1}]
-
-    if elem == base do
-      has_cross_pattern(position, [first, first, last, last], directions, array, size)
-    else
-      0
+    directions = [[[-1, -1], [1, 1]], [[-1, 1], [1, -1]]]
+    cond do
+      elem != base -> 0
+      true ->
+        Enum.reduce_while(directions, 0, fn diagonal, _ ->
+          reduce_diag([first, last], diagonal, position, array, size) end)
     end
   end
 
-  defp(has_cross_pattern(_, [], [], _, _), do: 1)
-
-  defp has_cross_pattern(index, elems, [direction | directions], array, size) do
-    case element_or_nil(array, index, direction, size) do
-      nil ->
-        0
-
-      {elem, _, _} ->
-        case List.delete(elems, elem) do
-          l when l == elems -> 0
-          new_elems -> has_cross_pattern(index, new_elems, directions, array, size)
-        end
-    end
+  defp reduce_diag(_,[],_,_,_),do: {:cont, 1}
+  defp reduce_diag([first, last], diagonal, position, array, size) do
+    case Enum.map(diagonal, fn [p1, p2] -> element_or_nil_no_idx(array, position, {p1, p2}, size) end) do
+        [elem1, elem2] when elem1 == first and elem2 == last or elem1 == last and elem2 == first -> {:cont, 1}
+        _ -> {:halt, 0}
+      end
   end
 
   defp has_word_pattern(elem, {r, c}, [e | pattern], direction, array, size) do
@@ -75,6 +65,13 @@ defmodule Day4 do
       end
     else
       false
+    end
+  end
+
+  defp element_or_nil_no_idx(array, position, direction, size) do
+    case element_or_nil(array, position, direction, size) do
+      nil -> nil
+      {elem, _, _} -> elem
     end
   end
 
