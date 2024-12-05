@@ -94,8 +94,7 @@ defmodule Day4 do
 
   defp convert_to_indexed_array(input) do
     input
-    |> String.trim()
-    |> String.split(~r{(\r\n|\r|\n)})
+    |> Util.split_lines()
     |> Enum.map(fn line ->
       line |> String.to_charlist() |> Enum.with_index(&as_tuple/2) |> Arrays.new()
     end)

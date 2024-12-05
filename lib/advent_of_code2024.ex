@@ -4,4 +4,7 @@ defmodule AdventOfCode2024 do
       Day4.run!(input)
   end
 
+  def day5!(input) when not is_nil(input) do
+    Day5.run!(input)
+  end
 end
