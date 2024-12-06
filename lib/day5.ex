@@ -7,33 +7,47 @@ defmodule Day5 do
 
     part1 =
       pages_list
-      |> Enum.filter(fn pages -> follows_rules?(pages, rules) end)
+      |> Enum.filter(&follows_rules?(&1, rules))
       |> Enum.map(&sum_middle_number/1)
       |> Enum.sum()
 
     part2 =
-      input
-      |> Enum.map(fn pages -> fix_failed_updates(pages, rules) end)
+      pages_list
+      |> Enum.map(&map_pages(&1, rules))
+      |> Enum.map(&sum_middle_number/1)
+      |> Enum.sum()
 
     {part1, part2}
   end
 
-  def fix_pages(pages, rules) do
+  defp map_pages(pages, rules) do
+    pages
+    |> with_broken_rules(rules)
+    |> process_broken_rules()
   end
 
-  def fix_failed_updates(pages, rules) do
-    cond do
-      follows_rules?(pages, rules) -> pages
-      true -> fix_pages(pages, rules)
+  defp with_broken_rules(pages, rules) do
+    rules
+    |> Enum.count(fn rule -> not follows_rule?(pages, rule) end)
+    |> then(&{pages, rules, &1})
+  end
+
+  defp process_broken_rules({pages, rules, broken_rule_count}) do
+    case broken_rule_count do
+      0 -> pages
+      _ -> fix_rules(pages, rules)
     end
   end
 
-  defp sum_middle_number(pages) do
-    pages
-    |> length()
-    |> div(2)
-    |> then(fn idx -> Enum.at(pages, idx) end)
+  defp fix_rules(pages, rules) do
+    IO.inspect(rules)
+    IO.inspect(pages)
+    [0]
   end
+
+  defp follows_rules?(pages, rules), do: Enum.all?(rules, &follows_rule?(pages, &1))
+
+  defp follows_rule?(pages, rules), do: do_follow_rule?(pages, rules, [])
 
   defp do_follow_rule?([n1 | _], {n1, n2}, [n2]), do: false
 
@@ -52,10 +66,12 @@ defmodule Day5 do
     do_follow_rule?(pages, {n1, n2}, found_pages)
   end
 
-  defp follows_rule?(pages, rules), do: do_follow_rule?(pages, rules, [])
-
-  defp follows_rules?(pages, rules),
-    do: Enum.all?(rules, fn rule -> follows_rule?(pages, rule) end)
+  defp sum_middle_number(pages) do
+    pages
+    |> length()
+    |> div(2)
+    |> then(&Enum.at(pages, &1))
+  end
 
   defp create_lists(line, rules) when line == "", do: {rules, []}
 
@@ -63,13 +79,13 @@ defmodule Day5 do
     line
     |> split_entry_to_int_list("|")
     |> List.to_tuple()
-    |> then(fn rule -> [rule | rules] end)
+    |> then(&[&1 | rules])
   end
 
   defp create_lists(line, {rules, pages}) do
     line
     |> split_entry_to_int_list(",")
-    |> then(fn page -> {rules, [page | pages]} end)
+    |> then(&{rules, [&1 | pages]})
   end
 
   defp split_entry_to_int_list(line, separator) do

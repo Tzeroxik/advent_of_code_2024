@@ -8,8 +8,9 @@ defmodule Day4 do
 
   defp count_pattern(pattern, array, mode) do
     pattern = String.to_charlist(pattern)
+
     array
-    |> Enum.map(fn line -> count_pattern_in_line(line, pattern, array, mode) end)
+    |> Enum.map(&count_pattern_in_line(&1, pattern, array, mode))
     |> Enum.sum()
   end
 
@@ -25,26 +26,39 @@ defmodule Day4 do
 
   defp find_pattern_starting(elem, position, pattern, array, size, :word) do
     [{0, 1}, {0, -1}, {1, 0}, {-1, 0}, {1, 1}, {-1, -1}, {1, -1}, {-1, 1}]
-    |> Enum.count(fn direction ->
-      has_word_pattern(elem, position, pattern, direction, array, size)
-    end)
+    |> Enum.count(&has_word_pattern(elem, position, pattern, &1, array, size))
   end
 
   defp find_pattern_starting(elem, position, [first, base, last], array, size, :cross) do
     directions = [[[-1, -1], [1, 1]], [[-1, 1], [1, -1]]]
+
     cond do
-      elem != base -> 0
+      elem != base ->
+        0
+
       true ->
-        Enum.reduce_while(directions, 0, fn diagonal, _ ->
-          reduce_diag([first, last], diagonal, position, array, size) end)
+        directions
+        |> Enum.reduce_while(0, fn diag, _ ->
+          reduce_diag([first, last], diag, position, array, size)
+        end)
     end
   end
 
   defp reduce_diag([first, last], diagonal, position, array, size) do
-    case Enum.map(diagonal, fn [p1, p2] -> element_or_nil_no_idx(array, position, {p1, p2}, size) end) do
-        [elem1, elem2] when elem1 == first and elem2 == last or elem1 == last and elem2 == first -> {:cont, 1}
-        _ -> {:halt, 0}
-      end
+    diagonal =
+      diagonal
+      |> Enum.map(fn [p1, p2] ->
+        element_or_nil_no_idx(array, position, {p1, p2}, size)
+      end)
+
+    case diagonal do
+      [elem1, elem2]
+      when (elem1 == first and elem2 == last) or (elem1 == last and elem2 == first) ->
+        {:cont, 1}
+
+      _ ->
+        {:halt, 0}
+    end
   end
 
   defp has_word_pattern(elem, {r, c}, [e | pattern], direction, array, size) do
