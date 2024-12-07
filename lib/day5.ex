@@ -11,38 +11,31 @@ defmodule Day5 do
       |> Enum.map(&sum_middle_number/1)
       |> Enum.sum()
 
-    part2 =
+    _part2 =
       pages_list
-      |> Enum.map(&map_pages(&1, rules))
+      |> Enum.filter(&(not follows_rules?(&1, rules)))
+      |> Enum.map(&order_pages_by_rules(&1, rules))
       |> Enum.map(&sum_middle_number/1)
       |> Enum.sum()
 
-    {part1, part2}
+    {part1, nil}
   end
 
-  defp map_pages(pages, rules) do
-    pages
-    |> with_broken_rules(rules)
-    |> process_broken_rules()
-  end
-
-  defp with_broken_rules(pages, rules) do
+  defp order_pages_by_rules(pages, rules) do
     rules
-    |> Enum.count(fn rule -> not follows_rule?(pages, rule) end)
-    |> then(&{pages, rules, &1})
+    |> Enum.reduce(%{}, &update_rules_map/2)
+    |> Enum.reduce(Arrays.new(), &order_pages(&1, &2, pages))
   end
 
-  defp process_broken_rules({pages, rules, broken_rule_count}) do
-    case broken_rule_count do
-      0 -> pages
-      _ -> fix_rules(pages, rules)
-    end
+  defp update_rules_map({back, front}, map) do
+    map
+    |> Map.get_and_update(back, fn value ->
+      if value == nil, do: MapSet.new([front]), else: MapSet.put(value, front)
+    end)
+    |> elem(1)
   end
 
-  defp fix_rules(pages, rules) do
-    IO.inspect(rules)
-    IO.inspect(pages)
-    [0]
+  defp order_pages({_back, _front}, _pages, _acc) do
   end
 
   defp follows_rules?(pages, rules), do: Enum.all?(rules, &follows_rule?(pages, &1))
