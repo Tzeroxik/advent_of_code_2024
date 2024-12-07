@@ -42,6 +42,7 @@ defmodule Day7 do
 
   defp operation_configurations(operators, [value | operands], result, acc) do
     acc
+    |> Enum.filter(&(&1 <= result))
     |> Enum.flat_map(fn cumulative -> Enum.map(operators, fn op -> op.(cumulative, value) end) end)
     |> then(&operation_configurations(operators, operands, result, &1))
   end
